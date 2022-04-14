@@ -5,6 +5,7 @@ import numpy as np
 CITY_DATA = { 'chicago': 'chicago.csv',
               'new york': 'new_york_city.csv',
               'washington': 'washington.csv' }
+months = ['january', 'february', 'march', 'april', 'may', 'june']
 
 def get_filters():
    
@@ -12,48 +13,41 @@ def get_filters():
    
         city=input('Would you like to see data for Chicago, New York, or Washington?').lower()
     
-        
         months=['january','february', 'march', 'april', 'may', 'june','all']
         days=['monday','tuesday','wednesday','thursday','friday', 'saturday','sunday','all']
-
-        month=input('Which month - All,January, February, March, April, May, or June?').lower()
-        day=input('Which day -  All,Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, or Sunday?').lower()
-
+        month=input('Which month - January, February, March, April, May, or June?').lower()
+        day=input('Which day - Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, or Sunday?').lower()
+        
         while (day not in days):
             day=input('Which day - Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, or Sunday?').lower()
         while (month not in months):
             month=input('Which month - January, February, March, April, May, or June?').lower()
-          
+            
         print('-'*40)
         return city, month, day
 
 
-def load_data(city, month, day):
-     
+def load_data(city, month, day):     
     df = pd.read_csv(CITY_DATA[city])
-    
     # convert the Start Time column to datetime
     df['Start Time'] = pd.to_datetime(df['Start Time'])
 
     # extract month and day of week from Start Time to create new columns
-    df['day_of_week'] = df['Start Time'].dt.day_name
+    df['day_of_week'] = df['Start Time'].dt.strftime("%A")
     df['month'] =  df['Start Time'].dt.month
 
     # filter by month if applicable
     if month != 'all':
         # use the index of the months list to get the corresponding int
-        
-        months = ['january', 'february', 'march', 'april', 'may', 'june']
         month =  months.index(month)+1
-    
         # filter by month to create the new dataframe
         df = df[df['month']==month] 
 
     # filter by day of week if applicable
     if day != 'all':
         # filter by day of week to create the new dataframe
-        df =  df[df['day_of_week']==day.title()]  
-
+        df =  df[df['day_of_week']==day.title()] 
+        
     return df
 
 
@@ -66,9 +60,11 @@ def time_stats(df):
     df['hour'] = df['Start Time'].dt.hour
 
 # find the most popular hour
-    print("most popular hour ",  df['hour'].value_counts().idxmax())
+    print("most popular hour  ",  df['hour'].value_counts().idxmax())
     print("most popular week day " , df['day_of_week'].value_counts().idxmax())
-    print("most popular month ", df['month'].value_counts().idxmax() )
+    name_of_month =  months[df['month'].value_counts().idxmax()-1]
+    print("most popular month ", name_of_month )
+
 
     print("\nThis took %s seconds." % (time.time() - start_time))
     print('-'*40)
@@ -82,10 +78,8 @@ def station_stats(df):
 
     print("most popular Start Station " ,df['Start Station'].value_counts().idxmax())
     print("most popular End Station ", df['End Station'].value_counts().idxmax())
-    #print( df[df['Start Station'] and df['End Station']].value_counts().idxmax() )
-    print("most popular trip  ",df.groupby(['Start Station','End Station']).size().idxmax())
+    print("most popular trip ",df.groupby(['Start Station','End Station']).size().idxmax())
     
-
     print("\nThis took %s seconds." % (time.time() - start_time))
     print('-'*40)
 
@@ -116,20 +110,24 @@ def user_stats(df):
     print(df['User Type'].value_counts())
 
     # Display counts of gender
-    
     print(df['Gender'].value_counts())
 
 
     # Display earliest, most recent, and most common year of birth
     print("earliest year of birth  ",df['Birth Year'].min())
     print("most recent year of birth  ",df['Birth Year'].max())
-    print("most common year of birth  ",df['Birth Year'].value_counts().idxmax())
-    
-
-
+    print("Mmost common year of birth ",df['Birth Year'].value_counts().idxmax())
     print("\nThis took %s seconds." % (time.time() - start_time))
     print('-'*40)
-
+    
+def raw_data (df):
+    """Displays the data due filteration.
+    5 rows will added in each press"""
+    print('press enter to see row data, press no to skip')
+    x = 0
+    while (input()!= 'no' and x+5 < df.shape[0]):
+        x = x+5
+        print(df.head(x))
 
 def main():
     while True:
@@ -140,11 +138,12 @@ def main():
         station_stats(df)
         trip_duration_stats(df)
         user_stats(df)
-
+        raw_data(df)
+        
         restart = input('\nWould you like to restart? Enter yes or no.\n')
         if restart.lower() != 'yes':
             break
 
 
-if _name_ == "_main_":
+if __name__ == "__main__":
 	main()
